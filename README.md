@@ -10,9 +10,10 @@ extending the CakeDC users plugin.
 * execute from /path/to/project/: cake Migrations.migration --plugin users
 
 ## Included plugins ##
-* CakePHP Debug Kit
+* [CakePHP Debug Kit][]
 * CakeDC migrations
 * CakeDC users
+[CakePHP Debug Kit]: https://github.com/cakephp/debug_kit.git
 
 ## Extending the users plugin ##
 
