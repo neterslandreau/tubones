@@ -31,4 +31,34 @@ App::uses('Controller', 'Controller');
  * @package       Cake.Console.Templates.skel.Controller
  */
 class AppController extends Controller {
+/**
+ *
+ * @var array
+ */
+	public $components = array(
+		'Session',
+		'Cookie',
+		'Email',
+	);
+/**
+ *
+ * @var array
+ */
+	public $helpers = array(
+		'Session',
+		'Html',
+		'Js',
+		'Form',
+	);
+/**
+ *
+ * @param mixed $request
+ * @param mixed $response 
+ */
+	public function __construct($request = null, $response = null) {
+		parent::__construct($request, $response);
+		if (Configure::read('debug')) {
+			$this->components[] = 'DebugKit.Toolbar';
+		}
+	}
 }
