@@ -77,7 +77,8 @@ class AppController extends Controller {
 				'userModel' => 'User',
 				'fields' => array(
 					'username' => 'email',
-				)
+				),
+				'scope' => array('User.email_verified' => 1),
 			)
 		);
 		if (in_array(strtolower($this->params['controller']), $this->publicControllers)) {
