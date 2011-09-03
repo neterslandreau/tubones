@@ -32,6 +32,7 @@ App::uses('Controller', 'Controller');
  */
 class AppController extends Controller {
 /**
+ * Components
  *
  * @var array
  */
@@ -39,8 +40,10 @@ class AppController extends Controller {
 		'Session',
 		'Cookie',
 		'Email',
+		'Auth',
 	);
 /**
+ * Helpers
  *
  * @var array
  */
@@ -50,7 +53,10 @@ class AppController extends Controller {
 		'Js',
 		'Form',
 	);
+	public $publicControllers = array('pages');
+
 /**
+ * Constructor
  *
  * @param mixed $request
  * @param mixed $response 
@@ -60,5 +66,36 @@ class AppController extends Controller {
 		if (Configure::read('debug')) {
 			$this->components[] = 'DebugKit.Toolbar';
 		}
+	}
+/**
+ * beforeFilter
+ * 
+ */
+	public function beforeFilter() {
+		$this->Auth->authenticate = array(
+			'Form' => array(
+				'userModel' => 'User',
+				'fields' => array(
+					'username' => 'email',
+				)
+			)
+		);
+		if (in_array(strtolower($this->params['controller']), $this->publicControllers)) {
+            $this->Auth->allow('*');
+        }
+	}
+/**
+ * isAuthorized
+ *
+ * @return boolean
+ */
+	public function isAuthorized() {
+		if ($this->Auth->user() && $this->params['prefix'] != 'admin') {
+			return true;
+		}
+		if ($this->params['prefix'] == 'admin' && $this->Auth->user('is_admin')) {
+			return true;
+		}
+		return false;
 	}
 }
