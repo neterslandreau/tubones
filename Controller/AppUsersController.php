@@ -25,6 +25,34 @@ class AppUsersController extends UsersController {
 		return parent::render($view, $layout);
 	}
 /**
+ * User register action
+ *
+ * @return void
+ */
+	public function register() {
+		if ($this->Auth->user()) {
+			$this->Session->setFlash(__d('users', 'You are already registered and logged in!', true));
+			$this->redirect('/');
+		}
+
+		if (!empty($this->data)) {
+			$user = $this->User->register($this->data);
+			if ($user !== false) {
+				$this->set('user', $user);
+				$this->_sendVerificationEmail($user[$this->modelClass]['email']);
+				$this->Session->setFlash(__d('users', 'Your account has been created. You should receive an e-mail shortly to authenticate your account. Once validated you will be able to login.', true));
+				$this->redirect(array('action'=> 'login'));
+			} else {
+				unset($this->data[$this->modelClass]['passwd']);
+				unset($this->data[$this->modelClass]['temppassword']);
+				$this->Session->setFlash(__d('users', 'Your account could not be created. Please, try again.', true), 'default', array('class' => 'message warning'));
+			}
+		}
+
+		$this->_setLanguages();
+	}
+
+/**
  * Common login action
  *
  * @return void
@@ -75,18 +103,17 @@ class AppUsersController extends UsersController {
 			'from' => 'noreply@' . env('HTTP_HOST'),
 			'subject' => __d('users', 'Account verification'),
 			'template' => 'Users.account_verification');
-		$options['from'] = 'noreply@cakephp2.com';
+		$options['from'] = 'noreply@tubones.com';
 
 		$options = array_merge($defaults, $options);
 
-//		$email = new CakeEmail();
-//		$email->to = $to;
-//		$email->from($options['from']);
-//		$email->subject($options['subject']);
-//		$email->template($options['template']);
+		$email = new CakeEmail();
+		$email->to = $to;
+		$email->from($options['from']);
+		$email->subject($options['subject']);
+		$email->template($options['template']);
 
-//		return $email->send();
-		CakeEmail::deliver($to, $options['subject'], $options['template'], array('from' => $options['from']));
+		return $email->deliver($to, $options['subject'], $options['template'], array('from' => $options['from']));
 	}
 
 /**
