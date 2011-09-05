@@ -34,8 +34,9 @@
 </head>
 <body>
 	<div id="container">
+		<?php echo $this->element('Users/top_panel'); ?>
 		<div id="header">
-			<h1><?php echo $this->Html->link(__('CakePHP: the rapid development php framework'), 'http://cakephp.org'); ?></h1>
+			<h1><?php echo $this->Html->link(__('TuBones: the skeleton for CakePHP 2.0'), '/'); ?></h1>
 		</div>
 		<div id="content">
 
@@ -53,6 +54,6 @@
 			?>
 		</div>
 	</div>
-	<?php echo $this->element('sql_dump'); ?>
+	<?php //echo $this->element('sql_dump'); ?>
 </body>
 </html>
