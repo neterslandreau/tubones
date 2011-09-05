@@ -13,9 +13,11 @@ extending the CakeDC users plugin.
 * [CakePHP Debug Kit][]
 * [CakeDC migrations][]
 * [CakeDC users][]
+* [CakeDC utils (forked)][]
 [CakePHP Debug Kit]: https://github.com/cakephp/debug_kit.git
 [CakeDC users]: https://github.com/CakeDC/users.git
 [CakeDC migrations]: https://github.com/CakeDC/migrations.git
+[CakeDC utils (forked)]: git@github.com:neterslandreau/utils.git
 
 ## Extending the users plugin ##
 
