@@ -34,7 +34,6 @@
 </head>
 <body>
 	<div id="container">
-		<?php echo $this->element('Users/top_panel'); ?>
 		<div id="header">
 			<h1><?php echo $this->Html->link(__('TuBones: the skeleton for CakePHP 2.0'), '/'); ?></h1>
 		</div>
