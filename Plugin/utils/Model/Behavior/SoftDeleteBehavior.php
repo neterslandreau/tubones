@@ -39,7 +39,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param object $model
  * @param array $settings
  */
-    public function setup(&$model, $settings = array()) {
+    public function setup($model, $settings = array()) {
         if (empty($settings)) {
             $settings = $this->default;
         } elseif (!is_array($settings)) {
@@ -71,12 +71,10 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param array $query
  * @return array
  */
-    public function beforeFind(&$model, $query) {
+    public function beforeFind($model, $query) {
         $runtime = $this->runtime[$model->alias];
         if ($runtime) {
-			if (!is_array($query['conditions'])) {
-				$query['conditions'] = array();
-			}
+            $query['conditions'] = is_array($query['conditions']) ? $query['conditions'] : array();
             $conditions = array_filter(array_keys($query['conditions']));
 
             $fields = $this->_normalizeFields($model);
@@ -103,11 +101,13 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param array $query
  * @return boolean
  */
-    public function beforeDelete(&$model) {
+    public function beforeDelete($model) {
         $runtime = $this->runtime[$model->alias];
         if ($runtime) {
-        	$this->delete($model, $model->id);
+        	$res = $this->delete($model, $model->id);
             return false;
+        } else {
+			return true;
         }
     }
 
@@ -118,7 +118,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param integer $id
  * @return boolean
  */
-	public function delete(&$model, $id) {
+	public function delete($model, $id) {
 		$runtime = $this->runtime[$model->alias];
 
 		$data = array();
@@ -147,7 +147,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param integer $id
  * @return boolean
  */
-	public function undelete(&$model, $id) {
+	public function undelete($model, $id) {
 		$runtime = $this->runtime[$model->alias];
 		$this->softDelete($model, false);
 
@@ -185,9 +185,9 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param mixed $active
  * @return mixed if $active is null, then current setting/null, or boolean if runtime setting for model was changed
  */
-	public function softDelete(&$model, $active) {
+	public function softDelete($model, $active) {
 		if (is_null($active)) {
-			return ife(isset($this->runtime[$model->alias]), @$this->runtime[$model->alias], null);
+			return isset($this->runtime[$model->alias]) ? @$this->runtime[$model->alias] : null;
 		}
 
 
@@ -204,7 +204,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param mixed $expiration anything parseable by strtotime(), by default '-90 days'
  * @return integer
  */
-    public function purgeDeletedCount(&$model, $expiration = '-90 days') {
+    public function purgeDeletedCount($model, $expiration = '-90 days') {
         $this->softDelete($model, false);
         return $model->find('count', array(
 			'conditions' => $this->_purgeDeletedConditions($model, $expiration), 
@@ -218,7 +218,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param mixed $expiration anything parseable by strtotime(), by default '-90 days'
  * @return boolean if there were some outdated records
  */
-    public function purgeDeleted(&$model, $expiration = '-90 days') {
+    public function purgeDeleted($model, $expiration = '-90 days') {
         $this->softDelete($model, false);
         $records = $model->find('all', array(
 			'conditions' => $this->_purgeDeletedConditions($model, $expiration), 
@@ -240,7 +240,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param mixed $expiration anything parseable by strtotime(), by default '-90 days'
  * @return array
  */
-    protected function _purgeDeletedConditions(&$model, $expiration = '-90 days') {
+    protected function _purgeDeletedConditions($model, $expiration = '-90 days') {
         $purgeDate = date('Y-m-d H:i:s', strtotime($expiration));
         $conditions = array();
         foreach ($this->settings[$model->alias] as $flag => $date) {
@@ -259,10 +259,8 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param array $settings
  * @return array
  */
-    protected function _normalizeFields(&$model, $settings = array()) {
-		if (empty($settings)) {
-			$settings = @$this->settings[$model->alias];
-		}
+    protected function _normalizeFields($model, $settings = array()) {
+        $settings = empty($settings) ? @$this->settings[$model->alias] : $settings;
         $result = array();
         foreach ($settings as $flag => $date) {
             if (is_numeric($flag)) {
@@ -283,7 +281,7 @@ class SoftDeleteBehavior extends ModelBehavior {
  * @param object $model
  * @param mixed $active
  */
-    protected function _softDeleteAssociations(&$model, $active) {
+    protected function _softDeleteAssociations($model, $active) {
         if (empty($model->belongsTo)) {
 			return;
 		}
@@ -297,7 +295,7 @@ class SoftDeleteBehavior extends ModelBehavior {
 				}
 
 				foreach ($model->{$parentModel}->{$assocType} as $assoc => $assocConfig) {
-					$modelName = ife(empty($assocConfig['className']), $assoc, @$assocConfig['className']);
+					$modelName = empty($assocConfig['className']) ? $assoc : @$assocConfig['className'];
 					if ($model->alias != $modelName) {
 						continue;
 					}

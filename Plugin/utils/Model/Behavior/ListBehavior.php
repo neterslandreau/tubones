@@ -398,7 +398,6 @@ class ListBehavior extends ModelBehavior {
 	private function __bottomPositionInList($model, $except = null) {
 		extract($this->settings[$model->alias]);
 		$item = $this->__bottomItem($model, $except);
-
 		if (!empty($item) && isset($item[$model->alias][$positionColumn])) {
 			return $item[$model->alias][$positionColumn];
 		} else {
@@ -423,7 +422,10 @@ class ListBehavior extends ModelBehavior {
 			$conditions = array_merge($conditions, array($model->alias . '.' . $model->primaryKey . ' != ' => $except[$model->alias][$model->primaryKey]));
 		}
 		$model->recursive = 0;
-		return $model->find($conditions, null, array($model->alias . '.' . $positionColumn => 'DESC'));
+		$options = array(
+			'conditions' => $conditions,
+			'order' => array($model->alias . '.' . $positionColumn => 'DESC'));
+		return $model->find('first', $options);
 	}
 
 /**
@@ -536,14 +538,19 @@ class ListBehavior extends ModelBehavior {
  */
 	private function __insertAtPosition($model, $position) {
 		extract($this->settings[$model->alias]);
-		return $model->save(null, array(
+
+		$data = $model->data;
+		$model->data[$model->alias][$positionColumn] = 0;
+		$model->save(null, array(
 			'validate' => $validate,
 			'callbacks' => $callbacks));
+		$model->create($data);
+
 		$model->recursive = 0;
 		$model->findById($model->id);
 		$this->removeFromList($model);
 		$result = $this->__incrementPositionsOnLowerItems($model, $position);
-		if ($position <= $this->__bottomPositionInList($model)) {
+		if ($position <= $this->__bottomPositionInList($model) + 1) {
 			$model->data[$model->alias][$positionColumn] = $position;
 			$result = $model->save(null, array(
 				'validate' => $validate,

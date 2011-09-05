@@ -9,7 +9,7 @@
  * @license MIT License (http://www.opensource.org/licenses/mit-license.php)
  */
 
-App::import('Core', 'Multibyte');
+App::import('I18n', 'Multibyte');
 
 /**
  * Utils Plugin
@@ -78,20 +78,24 @@ class SluggableBehavior extends ModelBehavior {
 		}
 
 		if (empty($Model->data[$Model->alias])) {
-			return;
+			return true;
 		} else if (empty($Model->data[$Model->alias][$this->settings[$Model->alias]['label']])) {
-			return;
+			return true;
 		} else if (!$this->settings[$Model->alias]['update'] && !empty($Model->id) && !is_string($this->settings[$Model->alias]['trigger'])) {
-			return;
+			return true;
 		}
 
 		$slug = $Model->data[$Model->alias][$settings['label']];
-		if (method_Exists($Model, 'beforeSlugGeneration')) {
+		if (method_exists($Model, 'beforeSlugGeneration')) {
 			$slug = $Model->beforeSlugGeneration($slug, $settings['separator']);
 		}
 
 		$settings = $this->settings[$Model->alias];
-		$slug = $this->multibyteSlug($Model, $slug, $settings['separator']);
+		if (method_exists($Model, 'multibyteSlug')) {
+			$slug = $Model->multibyteSlug($slug, $settings['separator']);
+		} else {
+			$slug = $this->multibyteSlug($Model, $slug);
+		}
 
 		if ($settings['unique'] === true || is_array($settings['unique'])) {
 			$slug = $this->makeUniqueSlug($Model, $slug);
@@ -150,7 +154,7 @@ class SluggableBehavior extends ModelBehavior {
 		}
 		return $slug;
 	}
-	
+
 /**
  * Generates a slug from a (multibyte) string
  *
