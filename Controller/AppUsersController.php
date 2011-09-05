@@ -26,6 +26,7 @@ class AppUsersController extends UsersController {
 	}
 /**
  * User register action
+ * (overridden)
  *
  * @return void
  */
@@ -40,10 +41,11 @@ class AppUsersController extends UsersController {
 			if ($user !== false) {
 				$this->set('user', $user);
 				$this->_sendVerificationEmail($user[$this->modelClass]['email']);
+				$this->Session->write('Auth.redirect', $this->Auth->loginRedirect);
 				$this->Session->setFlash(__d('users', 'Your account has been created. You should receive an e-mail shortly to authenticate your account. Once validated you will be able to login.', true));
 				$this->redirect(array('action'=> 'login'));
 			} else {
-				unset($this->data[$this->modelClass]['passwd']);
+				unset($this->data[$this->modelClass]['password']);
 				unset($this->data[$this->modelClass]['temppassword']);
 				$this->Session->setFlash(__d('users', 'Your account could not be created. Please, try again.', true), 'default', array('class' => 'message warning'));
 			}
@@ -54,6 +56,7 @@ class AppUsersController extends UsersController {
 
 /**
  * Common login action
+ * (overridden)
  *
  * @return void
  */
@@ -97,7 +100,7 @@ class AppUsersController extends UsersController {
  * @param string $to Receiver email address
  * @param array $options EmailComponent options
  * @return boolean Success
- */
+ *
 	protected function _sendVerificationEmail($to = null, $options = array()) {
 		$defaults = array(
 			'from' => 'noreply@' . env('HTTP_HOST'),
@@ -118,6 +121,7 @@ class AppUsersController extends UsersController {
 
 /**
  * Shows a users profile
+ * (overridden)
  *
  * @param string $slug User Slug
  * @return void
@@ -131,5 +135,61 @@ class AppUsersController extends UsersController {
 		}
 	}
 
+/**
+ * Confirm email action and password reset action
+ * (overridden to allow for updating the user slug)
+ *
+ * @param string $type Type
+ * @return void
+ */
+	public function verify($type = 'email', $token = null) {
+		$verifyTypes = array('email', 'reset');
+		if (!$token || !in_array($type, $verifyTypes)) {
+			$this->Session->setFlash(__d('users', 'The url you accessed is not longer valid', true));
+		}
+
+		$data = $this->User->validateToken($token, $type === 'reset');
+		if (!$data) {
+			$this->Session->setFlash(__d('users', 'The url you accessed is not longer valid', true));
+			return $this->redirect('/');
+		}
+
+		$email = $data[$this->modelClass]['email'];
+		unset($data[$this->modelClass]['email']);
+
+		if ($type === 'reset') {
+			$newPassword = $data[$this->modelClass]['password'];
+			$data[$this->modelClass]['password'] = $this->Auth->password($newPassword);
+		}
+		if ($type === 'email') {
+			$data[$this->modelClass]['active'] = 1;
+		}
+		$this->User->Behaviors->Sluggable->settings['User']['update'] = true;
+		$saved = $this->User->save($data, false);
+		if ($saved) {
+			if ($type === 'reset') {
+				$this->Email->to = $email;
+				$this->Email->from = Configure::read('App.defaultEmail');
+				$this->Email->replyTo = Configure::read('App.defaultEmail');
+				$this->Email->return = Configure::read('App.defaultEmail');
+				$this->Email->subject = env('HTTP_HOST') . ' ' . __d('users', 'Password Reset', true);
+				$this->Email->template = null;
+				$content[] = __d('users', 'Your password has been reset', true);
+				$content[] = __d('users', 'Please login using this password and change your password', true);
+				$content[] = $newPassword;
+				$this->Email->send($content);
+				$this->Session->setFlash(__d('users', 'Your password was sent to your registered email account', true));
+			} else {
+				unset($data);
+				$data[$this->modelClass]['active'] = 1;
+				$this->User->save($data);
+				$this->Session->setFlash(__d('users', 'Your e-mail has been validated!', true));
+			}
+			$this->redirect(array('action' => 'login'));
+		}
+
+		$this->Session->setFlash(__d('users', 'There was an error verifying your account. Please check the email you were sent, and retry the verification link.', true));
+		$this->redirect('/');
+	}
 
 }
