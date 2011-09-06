@@ -100,7 +100,7 @@ class AppUsersController extends UsersController {
  * @param string $to Receiver email address
  * @param array $options EmailComponent options
  * @return boolean Success
- *
+ */
 	protected function _sendVerificationEmail($to = null, $options = array()) {
 		$defaults = array(
 			'from' => 'noreply@' . env('HTTP_HOST'),
